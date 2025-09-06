@@ -1,0 +1,508 @@
+
+<div id="yearResult" class="result">
+    <div id="ageYears">0 Years</div>
+    <div id="ageMonths">0 Months</div>
+    <div id="ageDays">0 Days</div>
+</div>
+
+<div class="input-container">
+    <label for="birthDate">From</label>
+    <input type="date" id="birthDate" placeholder="Enter Birth Date" value="1961-01-01">
+    <label for="currentDate">To</label>
+    <input type="date" id="currentDate" placeholder="Enter Current Date" value="">
+    <button onclick="calculateAge()">Calculate Age</button>
+</div>
+
+<center>
+    <h2 id="ageTitle"></h2>
+</center>
+
+<center>
+    <div id="ageDescription" class="description"></div>
+</center>
+
+<a href="https://netkibaten.com/how-many-weeks-old-am-i/"
+    style="display: block; text-align: center; padding: 10px; margin: 10px; font-size: 24px; border: 1px solid black; margin-bottom: 10px;">How
+    Many Weeks Old Am I</a>
+
+<div class="countdown-container">
+    <div id="countdownHours" class="countdown">0 Hours</div>
+    <div id="countdownMinutes" class="countdown">0 Minutes</div>
+    <div id="countdownSeconds" class="countdown">0 Seconds</div>
+</div>
+
+<div class="month-grid" id="monthGrid"></div>
+
+<div id="ageDetailsContainer">
+    <center>
+        <h3 id="ageDetailsTitle" class="title"></h3>
+    </center>
+
+    <center><button id="moreButton" class="more-button" style="display:none;" onclick="showNextMonth()">Next Month</button>
+    </center>
+
+    <table id="ageDetailsTable">
+        <thead>
+            <tr>
+                <th>If Date of Birth</th>
+                <th>Year</th>
+                <th>Month</th>
+                <th>Day</th>
+            </tr>
+        </thead>
+        <tbody id="ageDetailsBody"></tbody>
+    </table>
+</div>
+
+<center><div id="digitalClock" class="clock"></div></center>
+
+<div id="calendarSection">
+    <center>
+        <h3 id="calendarLabel">Calendar</h3>
+    </center>
+    <div id="calendar" class="calendar"></div>
+</div>
+
+<script>
+
+    let selectedMonth = 1; 
+
+    function calculateAge() {
+        const birthDateInput = document.getElementById('birthDate').value;
+        const currentDateInput = document.getElementById('currentDate').value || new Date().toISOString().split('T')[0];
+
+        if (!birthDateInput) {
+            alert('Please enter a valid birth date.');
+            return;
+        }
+
+        const birthDate = new Date(birthDateInput);
+        const currentDate = new Date(currentDateInput);
+
+        if (birthDate > currentDate) {
+            alert('Birth date cannot be after the current date.');
+            return;
+        }
+
+        const age = calculateAgeDetails(birthDate, currentDate);
+
+        document.getElementById('ageYears').textContent = `${age.years} Years`;
+        document.getElementById('ageMonths').textContent = `${age.months} Months`;
+        document.getElementById('ageDays').textContent = `${age.days} Days`;
+
+        const birthYear = birthDate.getFullYear();
+        const titleText = `Born in ${birthYear} - How old am I?`;
+        document.getElementById('ageTitle').textContent = titleText;
+
+        const descriptionText = `You are ${age.years} years, ${age.months} months, and ${age.days} days old.`;
+        document.getElementById('ageDescription').textContent = descriptionText;
+
+        displayCountdown(birthDate, currentDate);
+        displayMonths(birthDate);
+        showAgeDetails(selectedMonth, birthDate);
+        updateCalendar(selectedMonth, birthDate.getFullYear());
+    }
+
+    function calculateAgeDetails(birthDate, currentDate) {
+        let years = currentDate.getFullYear() - birthDate.getFullYear();
+        let months = currentDate.getMonth() - birthDate.getMonth();
+        let days = currentDate.getDate() - birthDate.getDate();
+
+        if (days < 0) {
+            months--;
+            days += new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
+        }
+
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+
+        return { years, months, days };
+    }
+
+    function displayCountdown(birthDate, currentDate) {
+        function updateCountdown() {
+            const now = new Date();
+            const ageInMilliseconds = now - birthDate;
+            const totalSeconds = Math.floor(ageInMilliseconds / 1000);
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const totalHours = Math.floor(totalMinutes / 60);
+
+            const seconds = totalSeconds % 60;
+            const minutes = totalMinutes % 60;
+            const hours = totalHours % 24;
+
+            document.getElementById('countdownHours').textContent = `${hours} Hours`;
+            document.getElementById('countdownMinutes').textContent = `${minutes} Minutes`;
+            document.getElementById('countdownSeconds').textContent = `${seconds} Seconds`;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    }
+
+    function displayMonths(birthDate) {
+        const monthGrid = document.getElementById('monthGrid');
+        monthGrid.innerHTML = ''; 
+
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        months.forEach((month, index) => {
+            const monthBox = document.createElement('div');
+            monthBox.className = 'month-box';
+            monthBox.textContent = month;
+
+            if (index + 1 === selectedMonth) {
+                monthBox.classList.add('selected');
+            }
+
+            monthBox.addEventListener('click', () => {
+                selectedMonth = index + 1; 
+                displayMonths(birthDate); 
+                showAgeDetails(selectedMonth, birthDate);
+                updateCalendar(selectedMonth, birthDate.getFullYear());
+            });
+
+            monthGrid.appendChild(monthBox);
+        });
+    }
+
+    function showAgeDetails(month, birthDate) {
+        selectedMonth = month; 
+        const currentDateInput = document.getElementById('currentDate').value || new Date().toISOString().split('T')[0];
+        const currentDate = new Date(currentDateInput);
+        const currentYear = currentDate.getFullYear();
+
+        const daysInMonth = new Date(currentYear, month, 0).getDate();
+        const ageDetailsBody = document.getElementById('ageDetailsBody');
+        ageDetailsBody.innerHTML = '';
+        const ageDetailsTable = document.getElementById('ageDetailsTable');
+        ageDetailsTable.style.display = 'table';
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(currentYear, month - 1, day);
+            const ageDiff = new Date(currentDate - birthDate);
+            const ageYears = ageDiff.getUTCFullYear() - 1970;
+            const ageMonths = ageDiff.getUTCMonth();
+            const ageDays = ageDiff.getUTCDate() - 1;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>On ${currentDate.toLocaleString('default', { month: 'short' })} ${day}${getOrdinal(day)}, ${birthDate.getFullYear()}</td>
+                <td>${ageYears}</td>
+                <td>${ageMonths}</td>
+                <td>${ageDays}</td>
+            `;
+            ageDetailsBody.appendChild(row);
+        }
+
+        const monthName = new Date(currentYear, month - 1).toLocaleString('default', { month: 'long' });
+        document.getElementById('ageDetailsTitle').textContent = `How old am I if I was born in ${monthName}, ${birthDate.getFullYear()}`;
+
+        if (month < 12) {
+            document.getElementById('moreButton').style.display = 'block';
+        } else {
+            document.getElementById('moreButton').style.display = 'none';
+        }
+    }
+
+    function updateCalendar(month, year) {
+        const calendar = document.getElementById('calendar');
+        const calendarLabel = document.getElementById('calendarLabel');
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const firstDayOfMonth = new Date(year, month - 1, 1).getDay(); 
+
+        calendar.innerHTML = ''; 
+        calendarLabel.textContent = `Calendar for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`;
+
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const headerRow = document.createElement('div');
+        headerRow.className = 'week-header';
+        daysOfWeek.forEach(day => {
+            const dayName = document.createElement('div');
+            dayName.className = 'day-name';
+            dayName.textContent = day;
+            headerRow.appendChild(dayName);
+        });
+        calendar.appendChild(headerRow);
+
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const emptyDayBox = document.createElement('div');
+            emptyDayBox.className = 'day-box empty';
+            calendar.appendChild(emptyDayBox);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(year, month - 1, day);
+            const dayBox = document.createElement('div');
+            dayBox.className = 'day-box';
+            dayBox.textContent = day;
+            calendar.appendChild(dayBox);
+        }
+    }
+
+    function showNextMonth() {
+        const birthDateInput = document.getElementById('birthDate').value;
+        if (!birthDateInput) {
+            alert('Please enter a valid birth date.');
+            return;
+        }
+
+        const birthDate = new Date(birthDateInput);
+        selectedMonth = (selectedMonth % 12) + 1;
+        showAgeDetails(selectedMonth, birthDate);
+        displayMonths(birthDate);
+        updateCalendar(selectedMonth, birthDate.getFullYear());
+    }
+
+    function getOrdinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        const formattedHours = hours % 12 || 12; 
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+        const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+
+        const timeString = `${formattedHours}:${formattedMinutes}:${formattedSeconds} ${ampm}`;
+        document.getElementById('digitalClock').textContent = timeString;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function setTitleOnPageLoad() {
+        const birthDateInput = document.getElementById('birthDate').value;
+        if (!birthDateInput) {
+            alert('Please enter a valid birth date.');
+            return;
+        }
+
+        const birthDate = new Date(birthDateInput);
+        const birthYear = birthDate.getFullYear();
+        const titleText = `Born in ${birthYear} - How old am I?`;
+        document.getElementById('ageTitle').textContent = titleText;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTitleOnPageLoad();
+        calculateAge();
+    });
+
+
+</script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: left;
+
+    }
+
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: left;
+        margin: 20px 0;
+    }
+
+    .input-container label {
+
+        margin: 5px 0;
+        font-weight: bold;
+    }
+
+    .input-container input {
+        width: 100%;
+        margin: 0 5px;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .input-container button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #05a399;
+        color: white;
+        border: none;
+        border-radius: 5px;
+    }
+
+    .result {
+        font-size: 22px;
+        margin: 20px 0;
+        background-color: rgb(15, 15, 16);
+        padding: 10px;
+        border-radius: 3px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        color: white;
+        
+    }
+
+    .result div {
+        margin: 0 10px;
+    }
+
+    .countdown-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+
+
+    }
+
+    .countdown {
+        font-size: 16px;
+        background-color: #363434;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        width: 83px;
+        height: auto;
+        box-sizing: border-box;
+    }
+
+    .month-grid {
+        padding: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 20px 0;
+        justify-content: center;
+        
+    }
+
+    .month-box {
+        flex: 1 1 30%;
+        background-color: #f2f2f2;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        border-radius: 5px;
+        text-align: center;
+        box-sizing: border-box;
+        max-width: 33%;
+    }
+
+    .month-box:hover {
+        background-color: #e0e0e0;
+    }
+
+    .month-box.selected {
+        background-color: #067d9b;
+        color: white;
+    }
+
+
+    table {
+
+        margin: 0 auto;
+        border-collapse: collapse;
+        width: 100%;
+        display: none;
+        text-align: left;
+
+    }
+
+    th,
+    td {
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f9f9f9;
+    }
+
+    .clock {
+        font-size: 26px;
+        margin: 20px 0;
+    }
+
+    .more-button {
+        margin-top: 15px;
+        margin-bottom: 10px;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #4b4e4b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 22px;
+    }
+
+    .more-button:hover {
+        background-color: #bd3121;
+    }
+
+    .title {
+        margin: 20px 0;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
+        height: 300px;
+        margin: 0 auto;
+        background-color: #f9f9f9;
+    }
+
+    .week-header {
+        display: contents;
+    
+        color: white;
+    }
+
+    .day-name,
+    .day-box {
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+    }
+
+    .day-name {
+        font-weight: bold;
+        background-color: #0867a3;
+        color: white;
+    }
+
+    .day-box {
+        cursor: pointer;
+    }
+
+    .day-box:hover {
+        background-color: #e0e0e0;
+    }
+
+
+    #digitalClock {
+        display: inline-block;
+        text-align: center;
+        padding: 10px;
+        margin: 10px;
+        background-color: #2b2929;
+        color: rgb(250, 245, 245);
+    }
+</style>
